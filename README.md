@@ -32,7 +32,7 @@ machine. The exact installation method depends on your operating system.
 |---|---|---|
 | Python | 3.10.x | Runtime. Version 3.10 specifically is required for madmom compatibility. |
 | FFmpeg | Any recent | Required by librosa to decode MP3 and other compressed audio formats. |
-| MuseScore | 4.x | Converts MusicXML files to PNG sheet music images. |
+| MuseScore | 4.x | Converts MusicXML files to PNG sheet music images. (Download installer from https://musescore.org/en/download/musescore.msi) |
 
 ---
 
