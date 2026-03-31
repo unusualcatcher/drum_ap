@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drum Transcriber</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d0f;
+      color: #e2e2e8;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: #18181c;
+      border-bottom: 1px solid #2a2a32;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-icon { font-size: 22px; }
+
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .topbar-sub {
+      font-size: 12px;
+      color: #555;
+      margin-left: auto;
+    }
+
+    .main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    .upload-card {
+      background: #18181c;
+      border: 1.5px dashed #2e2e3a;
+      border-radius: 16px;
+      padding: 48px 32px;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      margin-bottom: 32px;
+    }
+
+    .upload-card:hover { border-color: #f90; background: #1c1c20; }
+
+    .upload-card .upload-icon { font-size: 40px; margin-bottom: 12px; }
+
+    .upload-card p {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .upload-card p strong { color: #ccc; }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    input[type=file] {
+      padding: 8px 14px;
+      background: #111;
+      color: #ccc;
+      border: 1px solid #2e2e3a;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    input[type=file]::file-selector-button {
+      background: #222;
+      color: #eee;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-right: 10px;
+    }
+
+    .btn {
+      padding: 10px 26px;
+      background: #f90;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.2px;
+    }
+
+    .btn:hover { background: #ffaa22; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .error-box {
+      background: #1f0e0e;
+      border: 1px solid #5c1a1a;
+      color: #f87171;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .meta-bar {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      background: #18181c;
+      border: 1px solid #2a2a32;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #555; }
+    .meta-value { font-size: 16px; font-weight: 600; color: #fff; }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin: 36px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2a2a32;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #1a2e1a;
+      border: 1px solid #2d5a2d;
+      color: #4ade80;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.15s;
+      margin-bottom: 28px;
+    }
+
+    .download-btn:hover { background: #1f3a1f; }
+
+    .sheet-pages { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+
+    .sheet-page {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      position: relative;
+    }
+
+    .page-label {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: rgba(0,0,0,0.15);
+      color: #666;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .sheet-page img { width: 100%; display: block; }
+
+    .grid-scroll { overflow-x: auto; padding-bottom: 8px; }
+
+    .grid-table {
+      border-collapse: collapse;
+      min-width: max-content;
+    }
+
+    .grid-table th {
+      text-align: left;
+      padding: 6px 14px 6px 0;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #555;
+      white-space: nowrap;
+    }
+
+    .grid-table td {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #1e1e24;
+      border-radius: 2px;
+    }
+
+    .grid-table td.beat-marker { border-left-color: #333 !important; }
+    .grid-table td.bar-marker  { border-left: 2px solid #444 !important; }
+
+    .grid-table td.on.kick   { background: #c0392b; box-shadow: 0 0 4px #c0392b55; }
+    .grid-table td.on.snare  { background: #2563eb; box-shadow: 0 0 4px #2563eb55; }
+    .grid-table td.on.hi-hat { background: #16a34a; box-shadow: 0 0 4px #16a34a55; }
+    .grid-table td.on.other  { background: #52525b; }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .legend-swatch {
+      width: 12px; height: 12px; border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+  
+    <h1>Drum Transcriber</h1>
+    <span class="topbar-sub">Upload audio · Get sheet music</span>
+  </div>
+
+  <div class="main">
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="upload-card">
+        <div class="upload-icon">🎵</div>
+        <p><strong>Upload a drum track</strong><br>Supports MP3, WAV, OGG, FLAC</p>
+        <div class="file-row">
+          <input type="file" name="audio_file" accept=".mp3,.wav,.ogg,.flac" required>
+          <button class="btn" type="submit">Transcribe</button>
+        </div>
+      </div>
+    </form>
+
+    {% if error %}
+      <div class="error-box">⚠ {{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+
+      <div class="meta-bar">
+        <div class="meta-item">
+          <span class="meta-label">File</span>
+          <span class="meta-value" style="font-size:14px; color:#ccc;">{{ filename }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">BPM</span>
+          <span class="meta-value">{{ grid.bpm }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Events</span>
+          <span class="meta-value">{{ events|length }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Grid steps</span>
+          <span class="meta-value">{{ grid.steps }}</span>
+        </div>
+      </div>
+
+      {% if sheet_url %}
+        <a class="download-btn" href="{{ sheet_url }}" download>
+          ⬇ Download MusicXML
+        </a>
+      {% endif %}
+
+      {% if sheet_image_urls %}
+        <div class="section-title">Sheet Music — {{ sheet_image_urls|length }} page{{ sheet_image_urls|length|pluralize }}</div>
+        <div class="sheet-pages">
+          {% for img_url in sheet_image_urls %}
+          <div class="sheet-page">
+            <span class="page-label">Page {{ forloop.counter }}</span>
+            <img src="{{ img_url }}" alt="Sheet page {{ forloop.counter }}">
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="section-title">Beat Grid — 16th notes</div>
+      <div class="grid-scroll">
+        <table class="grid-table">
+          {% for drum, steps in grid.rows.items %}
+          <tr>
+            <th>{{ drum }}</th>
+            {% for active in steps %}
+              <td class="
+                {% if active %}on {{ drum }}{% endif %}
+                {% if forloop.counter0|divisibleby:16 %}bar-marker{% elif forloop.counter0|divisibleby:4 %}beat-marker{% endif %}
+              "></td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:#c0392b"></span> Kick</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#2563eb"></span> Snare</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#16a34a"></span> Hi-hat</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#52525b"></span> Other</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#444; border-left: 2px solid #666;"></span> Bar line</div>
+      </div>
+
+    {% endif %}
+  </div>
+
+</body>
+</html>
